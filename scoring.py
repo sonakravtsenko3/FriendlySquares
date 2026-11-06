@@ -1,16 +1,26 @@
 try:
     from numba import njit, prange
     import numpy
+
     def wrap_numpy(f):
         return numpy.array(f)
+
 except Exception as e:
-    print(f"WARINING! Numba failed to import! Score calculation will lag!")
+    print(f"WARNING! Numba failed to import! Score calculation will lag!")
+
     def wrap_numpy(f):
         return f
+
     from builtins import range as prange
-    def njit(parallel=False):
-        def Inner(func): return lambda *args, **kwargs: func(*args, **kwargs)
-        return Inner
+
+    def njit(func=None, **kwargs):
+        def decorator(f):
+            return f
+
+        if func is None:
+            return decorator
+
+        return decorator(func)
 
 
 @njit

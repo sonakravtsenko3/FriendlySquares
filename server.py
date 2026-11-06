@@ -290,7 +290,8 @@ class Server:
         else:
                 raise NotImplemented('Weird command')
 
-    async def listen_socket(self, websocket, path):
+    async def listen_socket(self, websocket):
+        path = websocket.request.path
         c = Client(websocket, path)
         await c.send_stuff({'cmd': 'version', 'version': GAME_VERSION})
         c = self.clients[c.client_id] = c
@@ -318,14 +319,20 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--port", default=None, type=int)
     args = parser.parse_args()
 
-    print(f'FriendlySquares server {GAME_VERSION} has started')
-    s = Server()
-    start_server = websockets.serve(s.listen_socket, ['0.0.0.0'], args.port or DEFAULT_PORT)
-    scoring.score(['rr', 'rr'])  # Compile Numba code
-    print(f'Ready to accept connections')
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+    async def main():
+        print(f'FriendlySquares server {GAME_VERSION} has started')
+        s = Server()
 
+        async with websockets.serve(
+            s.listen_socket,
+            "0.0.0.0",
+            args.port or DEFAULT_PORT
+        ):
+            scoring.score(['rr', 'rr'])  # Compile Numba code
+            print('Ready to accept connections')
+            await asyncio.Future()  # Keep server running
+
+    asyncio.run(main())
     # TODO: grabbed piece broadcasting
     # TODO: serverside babylon
     # TODO: timeout - random placement - 30sek
